@@ -12,92 +12,104 @@ var config = {
 };
 
 
-var fl = (function(dependencies, config){
-	var fs = dependencies[0],
-		path = dependencies[1],
-		watch = dependencies[2],
-		emitter = dependencies[3],
-		_ = dependencies[4];
+var fl = {};
 
-	var db = [];
+var populate = function() {
+	var dirfiles = fs.readdirSync(config.directory),
+		cleanfiles = [];
+	for (var i = 0; i < dirfiles.length; i++) {
+		clean(dirfiles[i], function (file) {
+			cleanfiles.push(file);
+		});
+	}
+	return cleanfiles;
+};
 
-	var populate = function(db, config, filter) {
-		var dirfiles = fs.readdirSync(config.directory),
-			cleanfiles = [];
-		for (var i = 0; i < dirfiles.length; i++) {
-			clean(dirfiles[i], function (file) {
-				cleanfiles.push(file);
+var filter = function(pattern, fn) {
+	return function(filename) {
+		if (pattern.test(filename)) {
+			fn(filename);
+		}
+	}
+};
+
+var clean = function (rawfile, fn) {
+	console.log("cleaing %s", rawfile);
+	filter(config.pattern, function(filename) {
+		var file = (function(config,filename) {
+			if(filename[0] === path.sep)
+				return {
+					fullpath: path.normalize(filename),
+					filename: path.basename(filename)
+				};
+			else
+				return {
+					fullpath: path.normalize( config.directory + path.sep + filename ),
+					filename: filename
+				};
+		})(config,filename);
+		if(fs.statSync(file.fullpath).isFile()) {
+			file.stats = fs.statSync(file.fullpath);
+			fn(file);
+		}
+	})(rawfile);
+};
+
+var dowatch = function() {
+	var watcher = new emitter();
+	console.log("watching with db of %d elements", fl.db.length);
+	watch(config.directory, config.options, filter(config.pattern, function(filename) {
+
+		console.log('watch: %s changed, %d in db.',filename, fl.db.length);
+
+		if(fs.existsSync(filename)) {
+			console.log("is file %b",fs.statSync(filename).isFile());
+			watcher.emit("created", filename);
+			
+			// remove any duplicate (sometimes watch does not properly trigger)
+			findOne(fl.db, path.normalize(filename), function(i) {
+				fl.db.splice(fl.db, i ,1);
 			});
+			
+			// add to db
+			clean(filename, function(file) {
+				fl.db.push(file);
+			})
+			
 		}
-//		db = cleanfiles;
-		return cleanfiles;
-	};
+		else {
+			console.log("fl: deleted or moved ? this should be solved with a setTimeout array attached to the object");
+			watcher.emit("deleted", filename);
+			// remove from db
+			findOne(fl.db, path.normalize(filename), function(i) {
+				var deleted = fl.db.splice(fl.db, i ,1);
+				console.log("deleted: %o", deleted);
+			});
 
-	var filter = function(pattern, fn) {
-		return function(filename) {
-			if (pattern.test(filename)) {
-				fn(filename);
-			}
+		}
+	}));
+
+	findOne = function(db,filename, cb) {
+		console.log("finding filename %s from %d elements", filename, db.length);
+		for (var i = 0; i < db.length; i++) {
+			console.log("findOne:",db[i].fullpath,filename);
+			if(db[i].fullpath === filename)
+				cb(i);
 		}
 	};
 
-	var clean = function (rawfile, fn) {
-		filter(config.pattern, function(filename) {
-			var file = {
-				fullpath: path.normalize( config.directory + '/' + filename ),
-				filename: filename
-			};
-			if(fs.statSync(file.fullpath).isFile()) {
-				file.stats = fs.statSync(file.fullpath);
-				fn(file);
-			}
-		})(rawfile);
-	};
-
-	var dowatch = function(config,filter) {
-		var watcher = new emitter();
-		console.log("watching with db of %d elements", db.length);
-		watch(config.directory, config.options, filter(config.pattern, function(filename) {
-
-			console.log('%s changed, %d in db.',filename,db.length);
-
-			if(fs.existsSync(filename)) {
-				console.log("is file %b",fs.statSync(filename).isFile());
-				watcher.emit("created", filename);
-				// add to db
-				db.push(filename);
-			}
-			else {
-				console.log("fl: deleted or moved ? this should be solved with a setTimeout array attached to the object");
-				watcher.emit("deleted", filename);
-				// remove from db
-				db.splice(db, findOne(db, path.normalize(filename)),1);
-			}
-		}));
-
-		findOne = function(db,filename) {
-			console.log("finding filename %s from %d elements", filename, db.length);
-			for (var i = db.length - 1; i >= 0; i--) {
-				console.log(db[i].fullpath,filename);
-				if(db[i].fullpath === filename)
-					return i;
-			}
-		};
-
-		return watcher;
-	};
+	return watcher;
+};
 
 
-	return {
-		db: populate(db, config, filter),
-		watch: dowatch(config, filter)
-	};
-})([fs,path,watch,emitter,_], config);
+fl.db= populate();
+fl.watch= dowatch();
+
 
 
 // module.exports = fl;
 
-console.log("global fl.db contains %d elements",fll.db.length);
+console.log("global fl.db contains %d elements",fl.db.length);
 
 fl.watch.on('created', function(f){ console.log("created, %s db contains %d", f, fl.db.length);});
 fl.watch.on('deleted', function(f){ console.log("deleted, %s db contains %d", f, fl.db.length);})
