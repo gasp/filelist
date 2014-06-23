@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "node-watch": "0.3.x"
+    "node-watch": "0.3.x",
+    "lodash": "2.4.x"
   },
   "author": "gasp",
   "license": "WTFPL"
