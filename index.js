@@ -5,10 +5,10 @@ var fs = require('fs'),
 	_ = require('lodash');
 
 var defaultConfig = {
-	directory: __dirname + '/somedir',
+	directory: path.join(__dirname, 'somedir'),
 	options: { recursive: false, followSymLinks: false }, 
 	pattern: /\.(mp33|mp3)$/,
-	events: ['created', 'deleted']
+	events: ['created', 'deleted', 'updated']
 };
 
 
@@ -41,12 +41,12 @@ var fl = function(config){
 				if(filename[0] === path.sep)
 					return {
 						fullpath: path.normalize(filename),
-						filename: path.basename(filename)
+						name: path.basename(filename)
 					};
 				else
 					return {
-						fullpath: path.normalize( config.directory + path.sep + filename ),
-						filename: filename
+						fullpath: path.normalize(path.join(config.directory, filename)),
+						name: filename
 					};
 			})(config,filename);
 			if(fs.statSync(file.fullpath).isFile()) {
@@ -106,13 +106,14 @@ var fl = function(config){
 // debug shit
 
 var filelist = fl(defaultConfig);
+console.log(filelist);
 setTimeout(function () {
 	console.log("filelist.db is...");
 	console.log(filelist.db);
 },5000);
 
 filelist.emit.on("created", function (filename) {
-	console.log(filename);
+	console.log("created", filename);
 })
 
 /*
