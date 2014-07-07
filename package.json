@@ -11,6 +11,10 @@
     "node-watch": "0.3.x",
     "lodash": "2.4.x"
   },
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-jasmine": "*"
+  },
   "author": "gasp",
   "license": "WTFPL"
 }
