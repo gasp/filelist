@@ -12,8 +12,7 @@ var defaults = {
 	events: ['created', 'deleted', 'updated'],
 	recursive: false,
 	watch: false,
-	async: false,
-	stats: true
+	async: false
 };
 
 
@@ -29,28 +28,18 @@ var list = function(config) {
 
 			if (!options.filter) {
 				for (var i = 0; i < dirfiles.length; i++) {
-					var file = {
-						name: dirfiles[i],
-						fullpath: path.join(options.directory, dirfiles[i])
-					}
-					files.push(file);
+					st = stats(dirfiles[i]);
+					if(st.stats.isFile)
+						files.push(st);
 				}
 			}
 			else {
 				for (var i = 0; i < dirfiles.length; i++) {
 					filter(options.filter, function(filename) {
-						var file = {
-							name: filename,
-							fullpath: path.join(options.directory, filename)
-						};
-						files.push(file);
+						st = stats(filename);
+						if(st.stats.isFile)
+							files.push(st);
 					})(dirfiles[i]);
-				}
-			}
-
-			if(options.stats) {
-				for (var i = 0; i < files.length; i++) {
-					files[i] = stats(files[i]);
 				}
 			}
 
@@ -70,14 +59,28 @@ var list = function(config) {
 			}
 		};
 
-		var stats = function(file) {
-			if(fs.statSync(file.fullpath).isFile()) {
-				file.stats = fs.statSync(file.fullpath);
+		var stats = function(filename) {
+			var file = {
+				name: filename,
+				fullpath: path.join(options.directory, filename)
+			};
+			var fileStats = fs.statSync(file.fullpath);
+			if (fileStats.isFile()) {
+				file.stats = fileStats;
+				file.stats.isFile = true;
+				file.stats.isDirectory = false;
 			}
-			return file
+			else if (fileStats.isDirectory()) {
+				file.stats = fileStats;
+				file.stats.isFile = false;
+				file.stats.isDirectory = true;
+			}
+
+			return file;
 		};
 
-		if(!options.watch && !options.async && !options.recursive) {
+
+		if(!options.watch && !options.async) {
 			return {
 				db: listSync(options)
 			};
