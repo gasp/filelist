@@ -40,7 +40,7 @@ describe("simply listing files in directory", function() {
 });
 
 
-describe("listing files in directory with options", function() {
+describe("listing files in directory with filter", function() {
 
 	var options = {
 		directory: path.join(__dirname, 'data'),
@@ -57,6 +57,12 @@ describe("listing files in directory with options", function() {
 			expect(fl.db[i].name).toBeDefined();
 			expect(fl.db[i].name.substring(fl.db[i].name.length-4)).toBe('.txt');
 		}
+	});
+
+	it("lists all the .txt and .text files in" +  options.directory, function() {
+		options.filter = /\.t(e*)xt$/;
+		var fl = filelist(options);
+		expect(fl.db.length).toBe(7);
 	});
 });
 

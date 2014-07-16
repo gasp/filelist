@@ -27,7 +27,6 @@ var list = function(config) {
 				files = [];
 			for (var i = 0; i < dirfiles.length; i++) {
 				filter(options.filter, function(filename) {
-					console.log(filename);
 					files.push({name: filename});
 				})(dirfiles[i]);
 			}
