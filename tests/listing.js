@@ -24,7 +24,8 @@ describe("simply listing files in directory", function() {
 		recursive: false,
 		filter: null,
 		async: false,
-		watch: false
+		watch: false,
+		stats: false
 	};
 
 	it("lists synchronously the folder" + shortdirectory, function() {
@@ -39,7 +40,6 @@ describe("simply listing files in directory", function() {
 
 });
 
-
 describe("listing files in directory with filter", function() {
 
 	var options = {
@@ -47,7 +47,8 @@ describe("listing files in directory with filter", function() {
 		recursive: false,
 		filter: /\.txt$/,
 		async: false,
-		watch: false
+		watch: false,
+		stats: false
 	};
 
 	it("lists only .txt files in" +  options.directory, function() {
@@ -66,3 +67,71 @@ describe("listing files in directory with filter", function() {
 	});
 });
 
+describe("get file stats", function() {
+	var options = {
+		directory: path.join(__dirname, 'data'),
+		recursive: false,
+		filter: /\.txt$/,
+		async: false,
+		watch: false,
+		stats: true
+	};
+	
+	it("get stats info of files", function() {
+		var fl = filelist(options);
+		expect(fl.db[0]).toBeDefined();
+		expect(fl.db[0].stats).toBeDefined();
+		expect(fl.db[0].stats.size).toBeDefined();
+		expect(fl.db[0].stats.blocks).toBeDefined();
+	});
+});
+
+
+/*
+
+	filelist.on('refresh', function() {
+		console.log(fileilst.db);
+	});
+
+	filelist.refresh();
+
+	// watch has been updated
+	filelist.on('update', function(file) {
+		console.log("file %s, has been %s", file.name, file.action);
+	});
+
+
+	
+/*
+describe("listing files in directory", function() {
+	var r = Math.floor(Math.random()*10000);
+	var tmpfile = './tmp_nopi'+r+'.txt';
+	fs.writeFileSync(tmpfile, 'I am no pi\ntoo bad');
+
+	it("checks a non-rpi archi", function() {
+		isrpi(false, function(is){
+			expect(is).toBeFalsy();
+		});
+	});
+
+	fs.unlink(tmpfile, function(){
+		console.log("temp file %s cleaned",tmpfile);
+	});
+});
+
+describe("isrpi is a pi", function() {
+	var r = Math.floor(Math.random()*10000);
+	var tmpfile = './tmp_nopi'+r+'.txt';
+	fs.writeFileSync(tmpfile, 'I am a pi\nsjhkdksBCM2708bs\nsee the line above');
+
+	it("checks a fake rpi archi", function() {
+		isrpi(false, function(is){
+			expect(is).toBeTruthy();
+		});
+	});
+
+	fs.unlink(tmpfile, function(){
+		console.log("temp file %s cleaned",tmpfile);
+	});
+});
+*/
