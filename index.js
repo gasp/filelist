@@ -21,10 +21,15 @@ var list = function(config) {
 	var populate = function() {
 		var dirfiles = fs.readdirSync(config.directory),
 			cleanfiles = [];
-		for (var i = 0; i < dirfiles.length; i++) {
-			clean(dirfiles[i], function (file) {
+
+		var push = function(dirfile) {
+			clean(dirfile, function (file) {
 				cleanfiles.push(file);
 			});
+		};
+
+		for (var i = 0; i < dirfiles.length; i++) {
+			push(dirfiles[i]);
 		}
 		return cleanfiles;
 	};
@@ -34,7 +39,7 @@ var list = function(config) {
 			if (pattern.test(filename)) {
 				fn(filename);
 			}
-		}
+		};
 	};
 
 	var clean = function (rawfile, fn) {
@@ -81,7 +86,7 @@ var list = function(config) {
 				// add to db
 				clean(filename, function(file) {
 					list.db.push(file); // fixme cannot access this !
-				})
+				});
 			
 			}
 			else {
@@ -98,11 +103,11 @@ var list = function(config) {
 
 	if(config.watch) {
 		dowatch();
-	};
+	}
 
 	return {
 		db: populate()
-	}
+	};
 };
 
 util.inherits(emitter, list);
